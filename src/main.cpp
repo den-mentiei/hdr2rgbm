@@ -57,6 +57,10 @@ public:
 			return false;
 		}
 
+		if (!init_buffers()) {
+			return false;
+		}
+
 		return true;
 	}
 
@@ -78,7 +82,35 @@ public:
 		}
 		delete[] rgbe.rgb;
 
-		// TODO:
+		ID3D11RenderTargetView* rtvs[] = { rgba_rtv.get() };
+		_immediate_device->OMSetRenderTargets(1, rtvs, nullptr);
+
+		D3D11_VIEWPORT viewport;
+
+		viewport.Width = float(rgbe.w);
+		viewport.Height = float(rgbe.h);
+		viewport.MinDepth = 0.0f;
+		viewport.MaxDepth = 1.0f;
+		viewport.TopLeftX = 0.0f;
+		viewport.TopLeftY = 0.0f;
+
+		_immediate_device->RSSetViewports(1, &viewport);
+		UINT stride = sizeof(Vertex);
+		UINT offset = 0;
+		ID3D11Buffer* vbs[] = { _vb.get() };
+		_immediate_device->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+		_immediate_device->IASetInputLayout(_ia.get());
+		_immediate_device->IASetVertexBuffers(0, 1, vbs, &stride, &offset);
+		_immediate_device->IASetIndexBuffer(_ib.get(), DXGI_FORMAT_R32_UINT, 0);
+
+		// TODO: hdr texture srv + sampler setup
+
+		_immediate_device->VSSetShader(_vs.get(), 0, 0);
+		_immediate_device->GSSetShader(0, 0, 0);
+		_immediate_device->PSSetShader(_ps.get(), 0, 0);
+		_immediate_device->DrawIndexed(6, 0, 0);
+
+		_immediate_device->Flush();
 
 		if (!save(rgba_texture, dst_path)) {
 			return false;
@@ -153,7 +185,7 @@ private:
 		float u, v;
 	};
 	
-	bool init_bufers() {
+	bool init_buffers() {
 		static const Vertex vertices[] = {
 			{ -1.0f, -1.0f, 0.0f, 0.0f, 1.0f },
 			{ -1.0f,  1.0f, 0.0f, 0.0f, 0.0f },
