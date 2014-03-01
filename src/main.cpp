@@ -131,7 +131,6 @@ public:
 private:
 	bool init_states() {
 		CD3D11_RASTERIZER_DESC rs_description(D3D11_DEFAULT);
-		// rs_description.CullMode = D3D11_CULL_NONE;
 		rs_description.DepthClipEnable = false;
 
 		HRESULT hr = _device->CreateRasterizerState(&rs_description, &_rs);
@@ -213,7 +212,7 @@ private:
 		layout[0].SemanticIndex = 0;
 		layout[0].Format = DXGI_FORMAT_R32G32B32_FLOAT;
 		layout[0].InputSlot = 0;
-		layout[0].AlignedByteOffset = sizeof(float) * 3;
+		layout[0].AlignedByteOffset = 0;
 		layout[0].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
 		layout[0].InstanceDataStepRate = 0;
 
