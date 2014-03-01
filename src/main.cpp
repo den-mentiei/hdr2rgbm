@@ -37,21 +37,36 @@ public:
 			return false;
 		}
 		ComPtr<ID3D11Texture2D> hdr_texture, rgba_texture;
-		ComPtr<ID3D11ShaderResourceView> hdr_srv, rgba_srv;
+		ComPtr<ID3D11ShaderResourceView> hdr_srv;
 		if (!create_hdr_texture(rgbe, hdr_texture, hdr_srv)) {
 			delete[] rgbe.rgb;
 			return false;
 		}
-		if (!create_rgba_texture(rgbe.w, rgbe.h, rgba_texture)) {
+		ComPtr<ID3D11RenderTargetView> rgba_rtv;
+		if (!create_rgba_texture(rgbe.w, rgbe.h, rgba_texture, rgba_rtv)) {
 			return false;
 		}
 		delete[] rgbe.rgb;
 
 		// TODO:
 
+		if (!save(rgba_texture, dst_path)) {
+			return false;
+		}
+
 		return true;
 	}
 private:
+	bool save(ComPtr<ID3D11Texture2D> texture, const wchar_t* dst_path) {
+		// TODO: save to .tga
+		HRESULT hr = D3DX11SaveTextureToFileW(_immediate_device.get(), texture.get(), D3DX11_IFF_PNG, dst_path);
+		if (FAILED(hr)) {
+			std::cerr << "Can not save result texture." << std::endl;
+			return false;
+		}
+		return true;
+	}
+
 	bool create_hdr_texture(const image_rgbe::Data& data, ComPtr<ID3D11Texture2D>& texture, ComPtr<ID3D11ShaderResourceView>& srv) {
 		D3D11_TEXTURE2D_DESC desc;
 		desc.Width = data.w;
@@ -90,7 +105,7 @@ private:
 		return true;
 	}
 
-	bool create_rgba_texture(const unsigned w, const unsigned h, ComPtr<ID3D11Texture2D>& texture) {
+	bool create_rgba_texture(const unsigned w, const unsigned h, ComPtr<ID3D11Texture2D>& texture, ComPtr<ID3D11RenderTargetView>& rtv) {
 		D3D11_TEXTURE2D_DESC desc;
 		desc.Width = w;
 		desc.Height = h;
@@ -99,7 +114,7 @@ private:
 		desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 		desc.SampleDesc.Count = 1;
 		desc.SampleDesc.Quality = 0;
-		desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+		desc.BindFlags = D3D11_BIND_RENDER_TARGET;
 		desc.Usage = D3D11_USAGE_DEFAULT;
 		desc.CPUAccessFlags = 0;
 		desc.MiscFlags = 0;
@@ -109,6 +124,19 @@ private:
 			std::cerr << "Can not create RGBA8 texture." << std::endl;
 			return false;
 		}
+
+		D3D11_RENDER_TARGET_VIEW_DESC rtv_desc;
+		rtv_desc.Format = desc.Format;
+		rtv_desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+		rtv_desc.Texture2D.MipSlice = 0;
+
+		ID3D10RenderTargetView *pRenderTargetView = NULL;
+		hr = _device->CreateRenderTargetView(texture.get(), &rtv_desc, &rtv);
+		if (FAILED(hr)) {
+			std::cerr << "Can not create RTV for RGBA8 texture." << std::endl;
+			return false;
+		}
+
 		return true;
 	}
 
