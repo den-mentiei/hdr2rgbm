@@ -50,9 +50,23 @@ public:
 
 		// TODO:
 
+		if (!save(rgba_texture, dst_path)) {
+			return false;
+		}
+
 		return true;
 	}
 private:
+	bool save(ComPtr<ID3D11Texture2D> texture, const wchar_t* dst_path) {
+		// TODO: save to .tga
+		HRESULT hr = D3DX11SaveTextureToFileW(_immediate_device.get(), texture.get(), D3DX11_IFF_PNG, dst_path);
+		if (FAILED(hr)) {
+			std::cerr << "Can not save result texture." << std::endl;
+			return false;
+		}
+		return true;
+	}
+
 	bool create_hdr_texture(const image_rgbe::Data& data, ComPtr<ID3D11Texture2D>& texture, ComPtr<ID3D11ShaderResourceView>& srv) {
 		D3D11_TEXTURE2D_DESC desc;
 		desc.Width = data.w;
