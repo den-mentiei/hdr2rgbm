@@ -37,13 +37,12 @@ public:
 			return false;
 		}
 		ComPtr<ID3D11Texture2D> hdr_texture, rgba_texture;
-		if (!create_hdr_texture(rgbe, hdr_texture)) {
-			std::cerr << "Can not create HDR texture." << std::endl;
+		ComPtr<ID3D11ShaderResourceView> hdr_srv, rgba_srv;
+		if (!create_hdr_texture(rgbe, hdr_texture, hdr_srv)) {
 			delete[] rgbe.rgb;
 			return false;
 		}
 		if (!create_rgba_texture(rgbe.w, rgbe.h, rgba_texture)) {
-			std::cerr << "Can not create RGBA8 texture." << std::endl;
 			return false;
 		}
 		delete[] rgbe.rgb;
@@ -53,7 +52,7 @@ public:
 		return true;
 	}
 private:
-	bool create_hdr_texture(const image_rgbe::Data& data, ComPtr<ID3D11Texture2D>& hdr_texture) {
+	bool create_hdr_texture(const image_rgbe::Data& data, ComPtr<ID3D11Texture2D>& texture, ComPtr<ID3D11ShaderResourceView>& srv) {
 		D3D11_TEXTURE2D_DESC desc;
 		desc.Width = data.w;
 		desc.Height = data.h;
@@ -71,8 +70,24 @@ private:
 		texture_data.pSysMem = data.rgb;
 		texture_data.SysMemPitch = data.w * sizeof(float) * 3;
 		texture_data.SysMemSlicePitch = 0;
-		HRESULT hr = _device->CreateTexture2D(&desc, &texture_data, &hdr_texture);
-		return SUCCEEDED(hr);
+		HRESULT hr = _device->CreateTexture2D(&desc, &texture_data, &texture);
+		if (FAILED(hr)) {
+			std::cerr << "Can not create HDR texture." << std::endl;
+			return false;
+		}
+		D3D11_SHADER_RESOURCE_VIEW_DESC srv_desc;
+		srv_desc.Format = desc.Format;
+		srv_desc.ViewDimension = D3D10_SRV_DIMENSION_TEXTURE2D;
+		srv_desc.Texture2D.MostDetailedMip = 0;
+		srv_desc.Texture2D.MipLevels = 1;
+
+		hr = _device->CreateShaderResourceView(texture.get(), &srv_desc, &srv);
+		if (FAILED(hr)) {
+			std::cerr << "Can not create SRV for HDR texture." << std::endl;
+			return false;
+		}
+
+		return true;
 	}
 
 	bool create_rgba_texture(const unsigned w, const unsigned h, ComPtr<ID3D11Texture2D>& texture) {
@@ -90,7 +105,11 @@ private:
 		desc.MiscFlags = 0;
 
 		HRESULT hr = _device->CreateTexture2D(&desc, 0, &texture);
-		return SUCCEEDED(hr);
+		if (FAILED(hr)) {
+			std::cerr << "Can not create RGBA8 texture." << std::endl;
+			return false;
+		}
+		return true;
 	}
 
 	ComPtr<ID3D11Device> _device;
