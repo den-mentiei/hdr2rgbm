@@ -12,11 +12,13 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src/main.cpp" />
+    <ClCompile Include="src\image_tga.cpp" />
     <ClCompile Include="src\rgbe\rgbe.c" />
     <ClCompile Include="src\image_rgbe.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\com_ptr.h" />
+    <ClInclude Include="src\image_tga.h" />
     <ClInclude Include="src\rgbe\rgbe.h" />
     <ClInclude Include="src\image_rgbe.h" />
   </ItemGroup>

@@ -18,6 +18,9 @@
     <ClCompile Include="src\image_rgbe.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="src\image_tga.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\com_ptr.h">
@@ -27,6 +30,9 @@
       <Filter>src\rgbe</Filter>
     </ClInclude>
     <ClInclude Include="src\image_rgbe.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\image_tga.h">
       <Filter>src</Filter>
     </ClInclude>
   </ItemGroup>
