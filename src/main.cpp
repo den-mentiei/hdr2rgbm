@@ -23,12 +23,23 @@ static const std::string vs_shader_code = ""
 "}";
 
 static const std::string ps_shader_code = ""
+"Texture2D input_texture : register(t0);\n"
+"SamplerState sampler_aniso : register(s0);\n\n"
 "struct PS_Input {\n"
 "	float4 pos : SV_POSITION;\n"
 "	float2 uv : TEXCOORD;\n"
 "};\n\n"
+"float4 rgbm_encode(float3 color) {\n"
+"	float4 rgbm;\n"
+"	color *= 1.0 / 6.0;\n"
+"	rgbm.a = saturate(max(max(color.r, color.g), max(color.b, 1e-6)));\n"
+"	rgbm.a = ceil(rgbm.a * 255.0) / 255.0;\n"
+"	rgbm.rgb = color / rgbm.a;\n"
+"	return rgbm;\n"
+"}\n\n"
 "float4 ps_main(PS_Input input) : SV_TARGET0 {\n"
-"	return float4(input.uv.x, input.uv.y, 1, 1);"
+"	float4 rgbm = rgbm_encode(input_texture.Sample(sampler_aniso, input.uv).rgb);\n"
+"	return rgbm;"
 "}";
 
 class Application {
@@ -62,6 +73,10 @@ public:
 		}
 
 		if (!init_buffers()) {
+			return false;
+		}
+
+		if (!init_sampler()) {
 			return false;
 		}
 
@@ -108,7 +123,11 @@ public:
 		_immediate_device->IASetVertexBuffers(0, 1, vbs, &stride, &offset);
 		_immediate_device->IASetIndexBuffer(_ib.get(), DXGI_FORMAT_R32_UINT, 0);
 
-		// TODO: hdr texture srv + sampler setup
+		ID3D11ShaderResourceView* srvs[] = { hdr_srv.get() };
+		_immediate_device->PSSetShaderResources(0, 1, srvs);
+		
+		ID3D11SamplerState* samplers[] = { _sampler.get() };
+		_immediate_device->PSSetSamplers(0, 1, samplers);
 
 		_immediate_device->VSSetShader(_vs.get(), 0, 0);
 		_immediate_device->GSSetShader(0, 0, 0);
@@ -220,7 +239,7 @@ private:
 		layout[1].SemanticIndex = 0;
 		layout[1].Format = DXGI_FORMAT_R32G32_FLOAT;
 		layout[1].InputSlot = 0;
-		layout[1].AlignedByteOffset = sizeof(float) * 3 + sizeof(float) * 2;
+		layout[1].AlignedByteOffset = sizeof(float) * 3;
 		layout[1].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
 		layout[1].InstanceDataStepRate = 0;
 
@@ -290,6 +309,22 @@ private:
 		return true;
 	}
 
+	bool init_sampler() {
+		CD3D11_SAMPLER_DESC desc(D3D11_DEFAULT);
+		desc.Filter = D3D11_FILTER_ANISOTROPIC;
+		desc.AddressU = D3D11_TEXTURE_ADDRESS_CLAMP;
+		desc.AddressV = D3D11_TEXTURE_ADDRESS_CLAMP;
+		desc.AddressW = D3D11_TEXTURE_ADDRESS_CLAMP;
+
+		HRESULT hr = _device->CreateSamplerState(&desc, &_sampler);
+		if (FAILED(hr)) {
+			std::cerr << "Can not create Sampler State." << std::endl;
+			return false;
+		}
+
+		return true;
+	}
+
 	bool save(ComPtr<ID3D11Texture2D> texture, const wchar_t* dst_path) {
 		// TODO: save to .tga
 		HRESULT hr = D3DX11SaveTextureToFileW(_immediate_device.get(), texture.get(), D3DX11_IFF_PNG, dst_path);
@@ -325,7 +360,7 @@ private:
 		}
 		D3D11_SHADER_RESOURCE_VIEW_DESC srv_desc;
 		srv_desc.Format = desc.Format;
-		srv_desc.ViewDimension = D3D10_SRV_DIMENSION_TEXTURE2D;
+		srv_desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
 		srv_desc.Texture2D.MostDetailedMip = 0;
 		srv_desc.Texture2D.MipLevels = 1;
 
@@ -375,6 +410,8 @@ private:
 
 	ComPtr<ID3D11Device> _device;
 	ComPtr<ID3D11DeviceContext> _immediate_device;
+
+	ComPtr<ID3D11SamplerState> _sampler;
 
 	ComPtr<ID3D11RasterizerState> _rs;
 	ComPtr<ID3D11BlendState> _bs;
