@@ -53,6 +53,10 @@ public:
 			return false;
 		}
 
+		if (!init_states()) {
+			return false;
+		}
+
 		if (!init_shaders()) {
 			return false;
 		}
@@ -95,6 +99,7 @@ public:
 		viewport.TopLeftY = 0.0f;
 
 		_immediate_device->RSSetViewports(1, &viewport);
+
 		UINT stride = sizeof(Vertex);
 		UINT offset = 0;
 		ID3D11Buffer* vbs[] = { _vb.get() };
@@ -108,6 +113,11 @@ public:
 		_immediate_device->VSSetShader(_vs.get(), 0, 0);
 		_immediate_device->GSSetShader(0, 0, 0);
 		_immediate_device->PSSetShader(_ps.get(), 0, 0);
+
+		_immediate_device->RSSetState(_rs.get());
+		_immediate_device->OMSetBlendState(_bs.get(), 0, 0xFFFFFFFF);
+		_immediate_device->OMSetDepthStencilState(_ds.get(), 0);
+
 		_immediate_device->DrawIndexed(6, 0, 0);
 
 		_immediate_device->Flush();
@@ -119,6 +129,50 @@ public:
 		return true;
 	}
 private:
+	bool init_states() {
+		CD3D11_RASTERIZER_DESC rs_description(D3D11_DEFAULT);
+		// rs_description.CullMode = D3D11_CULL_NONE;
+		rs_description.DepthClipEnable = false;
+
+		HRESULT hr = _device->CreateRasterizerState(&rs_description, &_rs);
+		if (FAILED(hr)) {
+			std::cerr << "Can not create RS." << std::endl;
+			return false;
+		}
+
+		D3D11_RENDER_TARGET_BLEND_DESC rt_bs_description;
+		rt_bs_description.BlendEnable = false;
+		rt_bs_description.SrcBlend = D3D11_BLEND_SRC_ALPHA;
+		rt_bs_description.DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
+		rt_bs_description.BlendOp = D3D11_BLEND_OP_ADD;
+		rt_bs_description.SrcBlendAlpha = D3D11_BLEND_ONE;
+		rt_bs_description.DestBlendAlpha = D3D11_BLEND_ZERO;
+		rt_bs_description.BlendOpAlpha = D3D11_BLEND_OP_ADD;
+		rt_bs_description.RenderTargetWriteMask = D3D11_COLOR_WRITE_ENABLE_ALL;
+
+		D3D11_BLEND_DESC bs_description;
+		bs_description.AlphaToCoverageEnable = false;
+		bs_description.IndependentBlendEnable = false;
+		bs_description.RenderTarget[0] = rt_bs_description;
+
+		hr = _device->CreateBlendState(&bs_description, &_bs);
+		if (FAILED(hr)) {
+			std::cerr << "Can not create BS." << std::endl;
+			return false;
+		}
+
+		CD3D11_DEPTH_STENCIL_DESC dst_description(D3D11_DEFAULT);
+		dst_description.DepthEnable = false;
+
+		hr = _device->CreateDepthStencilState(&dst_description, &_ds);
+		if (FAILED(hr)) {
+			std::cerr << "Can not create DSS." << std::endl;
+			return false;
+		}
+
+		return true;
+	}
+
 	bool init_shaders() {
 		ComPtr<ID3DBlob> vs_blob;
 		HRESULT hr = D3DX11CompileFromMemory(
@@ -322,6 +376,10 @@ private:
 
 	ComPtr<ID3D11Device> _device;
 	ComPtr<ID3D11DeviceContext> _immediate_device;
+
+	ComPtr<ID3D11RasterizerState> _rs;
+	ComPtr<ID3D11BlendState> _bs;
+	ComPtr<ID3D11DepthStencilState> _ds;
 
 	ComPtr<ID3D11VertexShader> _vs;
 	ComPtr<ID3D11PixelShader> _ps;
