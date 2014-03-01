@@ -122,6 +122,29 @@ private:
 			return false;
 		}
 
+		D3D11_INPUT_ELEMENT_DESC layout[2];
+		layout[0].SemanticName = "POSITION";
+		layout[0].SemanticIndex = 0;
+		layout[0].Format = DXGI_FORMAT_R32G32B32_FLOAT;
+		layout[0].InputSlot = 0;
+		layout[0].AlignedByteOffset = sizeof(float) * 3;
+		layout[0].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
+		layout[0].InstanceDataStepRate = 0;
+
+		layout[1].SemanticName = "TEXCOORD";
+		layout[1].SemanticIndex = 0;
+		layout[1].Format = DXGI_FORMAT_R32G32_FLOAT;
+		layout[1].InputSlot = 0;
+		layout[1].AlignedByteOffset = sizeof(float) * 3 + sizeof(float) * 2;
+		layout[1].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
+		layout[1].InstanceDataStepRate = 0;
+
+		hr = _device->CreateInputLayout(layout, 2, vs_blob->GetBufferPointer(), vs_blob->GetBufferSize(), &_ia);
+		if (FAILED(hr)) {
+			std::cerr << "Can not create IL" << std::endl;
+			return false;
+		}
+
 		return true;
 	}
 
