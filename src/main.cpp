@@ -5,6 +5,7 @@
 
 #include "com_ptr.h"
 #include "image_rgbe.h"
+#include "image_tga.h"
 
 static const std::string vs_shader_code = ""
 "struct VS_Input {\n"
@@ -39,7 +40,7 @@ static const std::string ps_shader_code = ""
 "}\n\n"
 "float4 ps_main(PS_Input input) : SV_TARGET0 {\n"
 "	float4 rgbm = rgbm_encode(input_texture.Sample(sampler_aniso, input.uv).rgb);\n"
-"	return rgbm;"
+"	return rgbm;\n"
 "}";
 
 class Application {
@@ -326,13 +327,29 @@ private:
 	}
 
 	bool save(ComPtr<ID3D11Texture2D> texture, const wchar_t* dst_path) {
-		// TODO: save to .tga
-		HRESULT hr = D3DX11SaveTextureToFileW(_immediate_device.get(), texture.get(), D3DX11_IFF_PNG, dst_path);
+		ComPtr<ID3D11Texture2D> staging_texture;
+	
+		D3D11_TEXTURE2D_DESC desc;
+		texture->GetDesc(&desc);
+		desc.BindFlags = 0;
+		desc.Usage = D3D11_USAGE_STAGING;
+		desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+		desc.MiscFlags = 0;
+
+		HRESULT hr = _device->CreateTexture2D(&desc, 0, &staging_texture);
 		if (FAILED(hr)) {
-			std::cerr << "Can not save result texture." << std::endl;
+			std::cerr << "Can not create staging texture." << std::endl;
 			return false;
 		}
-		return true;
+		
+		_immediate_device->CopyResource(staging_texture.get(), texture.get());
+		D3D11_MAPPED_SUBRESOURCE resource;
+		_immediate_device->Map(staging_texture.get(), 0, D3D11_MAP_READ, 0, &resource);
+		const unsigned char* rgba = (const unsigned char*)resource.pData;
+		const unsigned pitch = resource.RowPitch;
+		_immediate_device->Unmap(staging_texture.get(), 0);
+
+		return image_tga::save(dst_path, rgba, desc.Width, desc.Height);
 	}
 
 	bool create_hdr_texture(const image_rgbe::Data& data, ComPtr<ID3D11Texture2D>& texture, ComPtr<ID3D11ShaderResourceView>& srv) {
