@@ -1,9 +1,35 @@
 #include <iostream>
+#include <string>
 #include <d3d11.h>
 #include <d3dx11.h>
 
 #include "com_ptr.h"
 #include "image_rgbe.h"
+
+static const std::string vs_shader_code = ""
+"struct VS_Input {\n"
+"	float3 pos : POSITION;\n"
+"	float2 uv : TEXCOORD;\n"
+"};\n\n"
+"struct PS_Input {\n"
+"	float4 pos : SV_POSITION;\n"
+"	float2 uv : TEXCOORD;\n"
+"};\n\n"
+"PS_Input vs_main(VS_Input input) {\n"
+"	PS_Input o;\n"
+"	o.pos = float4(input.pos.x, input.pos.y, 0.0f, 1.0f);\n"
+"	o.uv = input.uv;\n"
+"	return o;\n"
+"}";
+
+static const std::string ps_shader_code = ""
+"struct PS_Input {\n"
+"	float4 pos : SV_POSITION;\n"
+"	float2 uv : TEXCOORD;\n"
+"};\n\n"
+"float4 ps_main(PS_Input input) : SV_TARGET0 {\n"
+"	return float4(input.uv.x, input.uv.y, 1, 1);"
+"}";
 
 class Application {
 public:
@@ -27,7 +53,7 @@ public:
 			return false;
 		}
 
-		return true;
+		return init_shaders();
 	}
 
 	bool convert(const wchar_t* src_path, const wchar_t* dst_path) {
@@ -57,6 +83,44 @@ public:
 		return true;
 	}
 private:
+	bool init_shaders() {
+		ComPtr<ID3DBlob> vs_blob;
+		HRESULT hr = D3DX11CompileFromMemory(
+			vs_shader_code.c_str(), vs_shader_code.length(),
+			0, 0, 0,
+			"vs_main", "vs_4_0",
+			0, 0, 0, 
+			&vs_blob, 0, 0);
+		if (FAILED(hr)) {
+			std::cerr << "Can not compile VS." << std::endl;
+			return false;
+		}
+		hr = _device->CreateVertexShader(vs_blob->GetBufferPointer(), vs_blob->GetBufferSize(), 0, &_vs);
+		if (FAILED(hr)) {
+			std::cerr << "Can not load VS." << std::endl;
+			return false;
+		}
+
+		ComPtr<ID3DBlob> ps_blob;
+		hr = D3DX11CompileFromMemory(
+			ps_shader_code.c_str(), ps_shader_code.length(),
+			0, 0, 0,
+			"ps_main", "ps_4_0",
+			0, 0, 0, 
+			&ps_blob, 0, 0);
+		if (FAILED(hr)) {
+			std::cerr << "Can not compile PS." << std::endl;
+			return false;
+		}
+		hr = _device->CreatePixelShader(ps_blob->GetBufferPointer(), ps_blob->GetBufferSize(), 0, &_ps);
+		if (FAILED(hr)) {
+			std::cerr << "Can not load PS." << std::endl;
+			return false;
+		}
+
+		return true;
+	}
+
 	bool save(ComPtr<ID3D11Texture2D> texture, const wchar_t* dst_path) {
 		// TODO: save to .tga
 		HRESULT hr = D3DX11SaveTextureToFileW(_immediate_device.get(), texture.get(), D3DX11_IFF_PNG, dst_path);
@@ -142,6 +206,9 @@ private:
 
 	ComPtr<ID3D11Device> _device;
 	ComPtr<ID3D11DeviceContext> _immediate_device;
+
+	ComPtr<ID3D11VertexShader> _vs;
+	ComPtr<ID3D11PixelShader> _ps;
 };
 
 int wmain(int argc, wchar_t* argv[]) {
