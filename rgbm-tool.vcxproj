@@ -12,9 +12,13 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src/main.cpp" />
+    <ClCompile Include="src\rgbe\rgbe.c" />
+    <ClCompile Include="src\image_rgbe.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\com_ptr.h" />
+    <ClInclude Include="src\rgbe\rgbe.h" />
+    <ClInclude Include="src\image_rgbe.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{8BE1A1FF-B9A0-445E-8CED-5B4C4181DC7C}</ProjectGuid>
@@ -63,10 +67,11 @@
       </PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>_HAS_EXCEPTIONS=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_HAS_EXCEPTIONS=0;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ExceptionHandling>false</ExceptionHandling>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
+      <TreatWarningAsError>true</TreatWarningAsError>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -82,7 +87,7 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <PreprocessorDefinitions>_HAS_EXCEPTIONS=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_HAS_EXCEPTIONS=0;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeTypeInfo>false</RuntimeTypeInfo>
       <ExceptionHandling>false</ExceptionHandling>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
