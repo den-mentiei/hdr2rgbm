@@ -1,4 +1,4 @@
-hdr2rgbm
+hdr2rgbm 1.0-rc1
 ========
 
 This tool allows to convert Radiance HDR (.hdr) files to RGBM-encoded .tga files.
