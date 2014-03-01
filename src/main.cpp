@@ -443,6 +443,7 @@ private:
 
 int wmain(int argc, wchar_t* argv[]) {
 	if (argc != 3) {
+		std::cout << "hdr2rgbm 1.0-rc1 by Denis Mentey (denis@goortom.com)" << std::endl;
 		std::cout << "Usage:" << std::endl;
 		std::cout << "rgbm-tool.exe <hdr-image> <tga-output>" << std::endl;
 		return 1;
