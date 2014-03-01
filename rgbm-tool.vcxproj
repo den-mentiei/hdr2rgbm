@@ -13,6 +13,9 @@
   <ItemGroup>
     <ClCompile Include="src/main.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\com_ptr.h" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{8BE1A1FF-B9A0-445E-8CED-5B4C4181DC7C}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
