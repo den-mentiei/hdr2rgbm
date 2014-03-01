@@ -53,7 +53,11 @@ public:
 			return false;
 		}
 
-		return init_shaders();
+		if (!init_shaders()) {
+			return false;
+		}
+
+		return true;
 	}
 
 	bool convert(const wchar_t* src_path, const wchar_t* dst_path) {
@@ -115,6 +119,63 @@ private:
 		hr = _device->CreatePixelShader(ps_blob->GetBufferPointer(), ps_blob->GetBufferSize(), 0, &_ps);
 		if (FAILED(hr)) {
 			std::cerr << "Can not load PS." << std::endl;
+			return false;
+		}
+
+		return true;
+	}
+
+	struct Vertex {
+		float x, y, z;
+		float u, v;
+	};
+	
+	bool init_bufers() {
+		static const Vertex vertices[] = {
+			{ -1.0f, -1.0f, 0.0f, 0.0f, 1.0f },
+			{ -1.0f,  1.0f, 0.0f, 0.0f, 0.0f },
+			{  1.0f,  1.0f, 0.0f, 1.0f, 0.0f },
+			{  1.0f, -1.0f, 0.0f, 1.0f, 1.0f },
+		};
+
+		D3D11_BUFFER_DESC desc;
+		desc.Usage = D3D11_USAGE_IMMUTABLE;
+		desc.ByteWidth = sizeof(vertices);
+		desc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+		desc.CPUAccessFlags = 0;
+		desc.MiscFlags = 0;
+		desc.StructureByteStride = 0;
+
+		D3D11_SUBRESOURCE_DATA resource;
+		resource.pSysMem = vertices;
+		resource.SysMemPitch = 0;
+		resource.SysMemSlicePitch = 0;
+
+		HRESULT hr = _device->CreateBuffer(&desc, &resource, &_vb);
+		if (FAILED(hr)) {
+			std::cerr << "Can not create VB." << std::endl;
+			return false;
+		}
+
+		static const unsigned indices[] = {
+			0, 1, 2,
+			0, 2, 3
+		};
+
+		desc.Usage = D3D11_USAGE_IMMUTABLE;
+		desc.ByteWidth = sizeof(indices);
+		desc.BindFlags = D3D11_BIND_INDEX_BUFFER;
+		desc.CPUAccessFlags = 0;
+		desc.MiscFlags = 0;
+		desc.StructureByteStride = 0;
+
+		resource.pSysMem = indices;
+		resource.SysMemPitch = 0;
+		resource.SysMemSlicePitch = 0;
+
+		hr = _device->CreateBuffer(&desc, &resource, &_ib);
+		if (FAILED(hr)) {
+			std::cerr << "Can not create IB." << std::endl;
 			return false;
 		}
 
@@ -209,6 +270,9 @@ private:
 
 	ComPtr<ID3D11VertexShader> _vs;
 	ComPtr<ID3D11PixelShader> _ps;
+
+	ComPtr<ID3D11InputLayout> _ia;
+	ComPtr<ID3D11Buffer> _ib, _vb;
 };
 
 int wmain(int argc, wchar_t* argv[]) {
