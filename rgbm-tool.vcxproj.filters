@@ -1,0 +1,39 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="src">
+      <UniqueIdentifier>{950a473f-3bb1-4980-babb-20983f5df7b3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\rgbe">
+      <UniqueIdentifier>{4a87ce8e-d993-44f5-8f4b-bdb110917f16}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src/main.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\rgbe\rgbe.c">
+      <Filter>src\rgbe</Filter>
+    </ClCompile>
+    <ClCompile Include="src\image_rgbe.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="src\image_tga.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\com_ptr.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\rgbe\rgbe.h">
+      <Filter>src\rgbe</Filter>
+    </ClInclude>
+    <ClInclude Include="src\image_rgbe.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\image_tga.h">
+      <Filter>src</Filter>
+    </ClInclude>
+  </ItemGroup>
+</Project>
