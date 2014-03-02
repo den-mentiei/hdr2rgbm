@@ -450,7 +450,7 @@ int wmain(int argc, wchar_t* argv[]) {
 	}
 	Application app;
 	if (!app.init()) {
-		return false;
+		return 1;
 	}
 	return app.convert(argv[1], argv[2]) ? 0 : 1;
 }
